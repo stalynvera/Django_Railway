@@ -199,7 +199,7 @@ export default function Home() {
       {/* Cuenta Regresiva con mejor diseño */}
       <div className="fixed bottom-6 left-6 z-10">
         <div className="bg-white/95 backdrop-blur-md p-5 rounded-xl shadow-xl border-2 border-[#B1C41B] transform hover:scale-105 transition-transform duration-300">
-          <h3 className="text-xl font-bold text-[#B1C41B] mb-2">Lanzamiento Especial</h3>
+          <h3 className="text-xl font-bold text-[#B1C41B] mb-2">Proximamente InArtPoint</h3>
           <div className="grid grid-cols-4 gap-2 text-center">
             <div className="bg-gray-100/80 p-2 rounded">
               <div className="text-2xl font-bold text-gray-800">{timeLeft.days}</div>
