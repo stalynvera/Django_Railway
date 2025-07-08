@@ -17,7 +17,7 @@ export default function Productos() {
 
   // Pre-cargar las categorías al principio
   useEffect(() => {
-    api.get("categorias/")
+    api.get("http://192.168.100.7:8000/api/categorias/")
       .then(response => {
         setCategorias(response.data);
         setLoading(false);

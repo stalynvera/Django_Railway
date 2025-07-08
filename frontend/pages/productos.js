@@ -12,7 +12,7 @@ export default function Productos() {
   const [mensaje, setMensaje] = useState("");
 
   useEffect(() => {
-    api.get("productos/")
+    api.get("http://192.168.100.7:8000/api/productos/")
       .then(response => {
         setProductos(response.data);
         setLoading(false);
