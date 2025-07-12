@@ -11,12 +11,17 @@ export default function Productos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCategoria, setSelectedCategoria] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [mensaje, setMensaje] = useState("");
   const [categoriaNombre, setCategoriaNombre] = useState("");
 
-  // Para el modal de seleccionar cantidad y precio
+  // Modal imagen ampliada con múltiples imágenes
+  const [productoImagenModal, setProductoImagenModal] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [indiceImagenSeleccionada, setIndiceImagenSeleccionada] = useState(0);
+
+  // Modal para seleccionar cantidad y precio
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+
+  const [mensaje, setMensaje] = useState("");
 
   // Cargar categorías al iniciar
   useEffect(() => {
@@ -57,8 +62,33 @@ export default function Productos() {
       });
   }, [selectedCategoria, categorias]);
 
-  const handleImageClick = (imageUrl) => {
-    setSelectedImage(imageUrl);
+  // Abrir modal imagen ampliada, con índice de imagen seleccionado
+  const abrirModalImagen = (producto, index = 0) => {
+    setProductoImagenModal(producto);
+    setSelectedImage(producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[index].imagen : producto.imagen);
+    setIndiceImagenSeleccionada(index);
+  };
+
+  // Cerrar modal imagen
+  const cerrarModalImagen = () => {
+    setProductoImagenModal(null);
+    setSelectedImage(null);
+    setIndiceImagenSeleccionada(0);
+  };
+
+  // Cambiar imagen en modal con flechas
+  const cambiarImagen = (direccion) => {
+    if (!productoImagenModal?.imagenes) return;
+
+    let nuevoIndice;
+    if (direccion === "prev") {
+      nuevoIndice = indiceImagenSeleccionada === 0 ? productoImagenModal.imagenes.length - 1 : indiceImagenSeleccionada - 1;
+    } else {
+      nuevoIndice = indiceImagenSeleccionada === productoImagenModal.imagenes.length - 1 ? 0 : indiceImagenSeleccionada + 1;
+    }
+
+    setIndiceImagenSeleccionada(nuevoIndice);
+    setSelectedImage(productoImagenModal.imagenes[nuevoIndice].imagen);
   };
 
   // Abrir modal para seleccionar cantidad y precio
@@ -96,7 +126,7 @@ export default function Productos() {
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundImage: 'url(/images/fondo.png)' }}>
       <div className="bg-white/90 p-8 rounded-xl shadow-lg text-center max-w-md">
         <p className="text-red-500 text-lg font-medium mb-4">{error}</p>
-        <button 
+        <button
           onClick={() => window.location.reload()}
           className="px-4 py-2 bg-[#B1C41B] text-white rounded-lg hover:bg-[#9a9e12] transition duration-300"
         >
@@ -107,8 +137,8 @@ export default function Productos() {
   );
 
   return (
-    <div 
-      className="min-h-screen bg-cover bg-fixed bg-center pb-20" 
+    <div
+      className="min-h-screen bg-cover bg-fixed bg-center pb-20"
       style={{ backgroundImage: 'url(/images/fondo.png)' }}
     >
       {/* Barra de navegación superior */}
@@ -120,7 +150,7 @@ export default function Productos() {
           <ArrowLeft size={20} />
           Volver
         </button>
-        
+
         <div className="flex items-center gap-4">
           <button
             onClick={() => window.location.href = "/"}
@@ -129,7 +159,7 @@ export default function Productos() {
             <Home size={20} />
             Inicio
           </button>
-          
+
           <button
             onClick={() => window.location.href = "/carrito"}
             className="relative p-3 bg-[#8B9424] rounded-lg hover:bg-[#7a821f] transition duration-300"
@@ -166,7 +196,7 @@ export default function Productos() {
               <span className="absolute bottom-0 left-0 w-full h-1 bg-[#B1C41B]/50 transform -translate-y-1"></span>
             </span>
           </h1>
-          
+
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {categorias.length === 0 ? (
               <div className="col-span-full text-center py-8">
@@ -193,7 +223,7 @@ export default function Productos() {
               <h2 className="text-2xl md:text-3xl font-bold text-[#B1C41B]">
                 Productos: <span className="text-gray-800">{categoriaNombre}</span>
               </h2>
-              <button 
+              <button
                 onClick={() => setSelectedCategoria(null)}
                 className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition duration-300"
               >
@@ -204,7 +234,7 @@ export default function Productos() {
             {productos.length === 0 ? (
               <div className="bg-white/90 p-8 rounded-xl shadow-lg text-center">
                 <p className="text-gray-800 mb-4">No hay productos disponibles en esta categoría.</p>
-                <button 
+                <button
                   onClick={() => setSelectedCategoria(null)}
                   className="px-4 py-2 bg-[#B1C41B] text-white rounded-lg hover:bg-[#9a9e12] transition duration-300"
                 >
@@ -214,16 +244,16 @@ export default function Productos() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {productos.map((producto) => (
-                  <div 
-                    key={producto.id} 
+                  <div
+                    key={producto.id}
                     className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200"
                   >
-                    <div 
+                    <div
                       className="h-48 overflow-hidden cursor-pointer relative"
-                      onClick={() => handleImageClick(producto.imagen)}
+                      onClick={() => abrirModalImagen(producto, 0)}
                     >
                       <img
-                        src={producto.imagen}
+                        src={producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0].imagen : producto.imagen}
                         alt={producto.nombre}
                         className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                       />
@@ -234,13 +264,28 @@ export default function Productos() {
                       </div>
                     </div>
 
+                    {/* Miniaturas (si tiene imágenes extras) */}
+                    {producto.imagenes && producto.imagenes.length > 1 && (
+                      <div className="flex justify-center gap-2 mt-2 px-2">
+                        {producto.imagenes.map((img, idx) => (
+                          <img
+                            key={idx}
+                            src={img.imagen}
+                            alt={`Miniatura ${idx + 1}`}
+                            onClick={() => abrirModalImagen(producto, idx)}
+                            className="h-10 w-10 object-cover rounded cursor-pointer border hover:border-[#B1C41B]"
+                          />
+                        ))}
+                      </div>
+                    )}
+
                     <div className="p-4">
                       <h3 className="font-bold text-gray-800 mb-2 line-clamp-1">{producto.nombre}</h3>
                       <p className="text-gray-600 text-sm mb-3 line-clamp-2">{producto.descripcion}</p>
-                      
+
                       <div className="flex justify-between items-center mt-4">
                         <span className="text-[#B1C41B] font-bold text-lg">${producto.precio_base}</span>
-                        <button 
+                        <button
                           onClick={() => abrirModalOpciones(producto)}
                           className="px-4 py-2 bg-[#B1C41B] text-white rounded-lg hover:bg-[#9a9e12] transition duration-300 flex items-center gap-2 text-sm"
                         >
@@ -259,28 +304,26 @@ export default function Productos() {
 
       {/* Modal para seleccionar precio/cantidad */}
       {productoSeleccionado && (
-<div
-  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-  onClick={() => setProductoSeleccionado(null)}
->
-  <div
-    className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative text-gray-900"
-    onClick={e => e.stopPropagation()}
-  >
-    <button
-      onClick={() => setProductoSeleccionado(null)}
-      className="absolute top-2 right-2 text-gray-600 hover:text-red-600 font-bold text-xl"
-    >
-      ×
-    </button>
-
-    <h3 className="text-xl font-semibold mb-4">{productoSeleccionado.nombre}</h3>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setProductoSeleccionado(null)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative text-gray-900"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setProductoSeleccionado(null)}
+              className="absolute top-2 right-2 text-gray-600 hover:text-red-600 font-bold text-xl"
+            >
+              ×
+            </button>
 
             <h3 className="text-xl font-semibold mb-4">{productoSeleccionado.nombre}</h3>
 
             {/* Precio base (1 unidad) */}
-            <div 
-              className="mb-4 border rounded p-3 cursor-pointer hover:bg-green-100" 
+            <div
+              className="mb-4 border rounded p-3 cursor-pointer hover:bg-green-100"
               onClick={() => seleccionarOpcion(1, Number(productoSeleccionado.precio_base))}
             >
               <p>
@@ -312,16 +355,65 @@ export default function Productos() {
       )}
 
       {/* Modal para imagen ampliada */}
-      {selectedImage && (
+      {selectedImage && productoImagenModal && (
         <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-40 p-4"
-          onClick={() => setSelectedImage(null)}
+          className="fixed inset-0 flex items-center justify-center bg-black/90 z-40 p-4"
+          onClick={cerrarModalImagen}
         >
-          <img
-            src={selectedImage}
-            alt="Producto ampliado"
-            className="max-h-full max-w-full rounded-lg shadow-lg"
-          />
+          <div className="relative max-w-4xl w-full" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={cerrarModalImagen}
+              className="absolute -top-10 right-0 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition duration-300 z-40"
+            >
+              ×
+            </button>
+
+            {/* Flecha izquierda */}
+            {productoImagenModal.imagenes && productoImagenModal.imagenes.length > 1 && (
+              <button
+                onClick={() => cambiarImagen("prev")}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition cursor-pointer"
+                aria-label="Imagen anterior"
+              >
+                ‹
+              </button>
+            )}
+
+            {/* Imagen ampliada */}
+            <div className="bg-white rounded-lg overflow-hidden shadow-2xl">
+              <img
+                src={selectedImage}
+                alt={`Imagen ${indiceImagenSeleccionada + 1} de ${productoImagenModal.imagenes.length}`}
+                className="w-full h-auto max-h-[80vh] object-contain"
+              />
+            </div>
+
+            {/* Flecha derecha */}
+            {productoImagenModal.imagenes && productoImagenModal.imagenes.length > 1 && (
+              <button
+                onClick={() => cambiarImagen("next")}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition cursor-pointer"
+                aria-label="Imagen siguiente"
+              >
+                ›
+              </button>
+            )}
+
+            {/* Miniaturas dentro del modal */}
+            <div className="flex justify-center gap-2 mt-4 px-2">
+              {productoImagenModal.imagenes.map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img.imagen}
+                  alt={`Miniatura modal ${idx + 1}`}
+                  onClick={() => abrirModalImagen(productoImagenModal, idx)}
+                  className={`h-16 w-16 object-cover rounded cursor-pointer border ${
+                    indiceImagenSeleccionada === idx ? "border-[#B1C41B] border-4" : "border-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -8,16 +8,20 @@ export default function Productos() {
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [mensaje, setMensaje] = useState("");
 
-  // Modal para elegir precio/cantidad
-  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  // Modal para imagen ampliada
+  const [productoImagenModal, setProductoImagenModal] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [indiceImagenSeleccionada, setIndiceImagenSeleccionada] = useState(0);
+
+  // Modal para elegir precio/cantidad (agregar al carrito)
+  const [productoOpcionesModal, setProductoOpcionesModal] = useState(null);
+
+  const [mensaje, setMensaje] = useState("");
 
   useEffect(() => {
     api.get("http://192.168.11.20:8000/api/productos/")
       .then(response => {
-        console.log(response.data); // Para confirmar datos recibidos
         setProductos(response.data);
         setLoading(false);
       })
@@ -28,27 +32,56 @@ export default function Productos() {
       });
   }, []);
 
-  const handleImageClick = (imageUrl) => {
-    setSelectedImage(imageUrl);
+  // Abrir modal de imagen ampliada, con índice de imagen seleccionado
+  const abrirModalImagen = (producto, index = 0) => {
+    setProductoImagenModal(producto);
+    setSelectedImage(producto.imagenes[index]?.imagen);
+    setIndiceImagenSeleccionada(index);
   };
 
-  // Abrir modal para elegir cantidad/precio
+  // Cerrar modal imagen
+  const cerrarModalImagen = () => {
+    setProductoImagenModal(null);
+    setSelectedImage(null);
+    setIndiceImagenSeleccionada(0);
+  };
+
+  // Abrir modal para elegir cantidad/precio (agregar al carrito)
   const abrirModalOpciones = (producto) => {
-    setProductoSeleccionado(producto);
+    setProductoOpcionesModal(producto);
+  };
+
+  // Cerrar modal opciones
+  const cerrarModalOpciones = () => {
+    setProductoOpcionesModal(null);
   };
 
   // Agregar producto con cantidad y precio seleccionado
-const seleccionarOpcion = (cantidad, precioUnitario) => {
-  agregarAlCarrito({
-    ...productoSeleccionado,
-    cantidad,
-    precio: precioUnitario, // precio por unidad
-  });
-  setMensaje(`${productoSeleccionado.nombre} (${cantidad} unidades) agregado al carrito`);
-  setTimeout(() => setMensaje(""), 3000);
-  setProductoSeleccionado(null);
-};
+  const seleccionarOpcion = (cantidad, precioUnitario) => {
+    agregarAlCarrito({
+      ...productoOpcionesModal,
+      cantidad,
+      precio: precioUnitario, // precio por unidad
+    });
+    setMensaje(`${productoOpcionesModal.nombre} (${cantidad} unidades) agregado al carrito`);
+    setTimeout(() => setMensaje(""), 3000);
+    cerrarModalOpciones();
+  };
 
+  // Cambiar imagen en modal con flechas
+  const cambiarImagen = (direccion) => {
+    if (!productoImagenModal?.imagenes) return;
+
+    let nuevoIndice;
+    if (direccion === "prev") {
+      nuevoIndice = indiceImagenSeleccionada === 0 ? productoImagenModal.imagenes.length - 1 : indiceImagenSeleccionada - 1;
+    } else {
+      nuevoIndice = indiceImagenSeleccionada === productoImagenModal.imagenes.length - 1 ? 0 : indiceImagenSeleccionada + 1;
+    }
+
+    setIndiceImagenSeleccionada(nuevoIndice);
+    setSelectedImage(productoImagenModal.imagenes[nuevoIndice].imagen);
+  };
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundImage: 'url(/images/fondo.png)' }}>
@@ -62,8 +95,8 @@ const seleccionarOpcion = (cantidad, precioUnitario) => {
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundImage: 'url(/images/fondo.png)' }}>
       <div className="bg-white/90 p-8 rounded-xl shadow-lg">
         <p className="text-xl font-semibold text-red-500">{error}</p>
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           className="mt-4 px-4 py-2 bg-[#B1C41B] text-white rounded hover:bg-[#9a9e12]"
         >
           Intentar nuevamente
@@ -73,8 +106,8 @@ const seleccionarOpcion = (cantidad, precioUnitario) => {
   );
 
   return (
-    <div 
-      className="min-h-screen bg-cover bg-fixed bg-center text-gray-900 pb-20" 
+    <div
+      className="min-h-screen bg-cover bg-fixed bg-center text-gray-900 pb-20"
       style={{ backgroundImage: 'url(/images/fondo.png)' }}
     >
       {/* Barra navegación */}
@@ -124,12 +157,12 @@ const seleccionarOpcion = (cantidad, precioUnitario) => {
           {productos.length > 0 ? (
             productos.map((producto) => (
               <div key={producto.id} className="bg-white/90 rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <div 
+                <div
                   className="h-48 overflow-hidden cursor-pointer relative"
-                  onClick={() => handleImageClick(producto.imagen)}
+                  onClick={() => abrirModalImagen(producto, 0)}
                 >
                   <img
-                    src={producto.imagen}
+                    src={producto.imagenes[0]?.imagen || producto.imagen}
                     alt={producto.nombre}
                     className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                   />
@@ -140,6 +173,21 @@ const seleccionarOpcion = (cantidad, precioUnitario) => {
                   </div>
                 </div>
 
+                {/* Miniaturas (si tiene imágenes extras) */}
+                {producto.imagenes && producto.imagenes.length > 1 && (
+                  <div className="flex justify-center gap-2 mt-2 px-2">
+                    {producto.imagenes.map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img.imagen}
+                        alt={`Miniatura ${idx + 1}`}
+                        onClick={() => abrirModalImagen(producto, idx)}
+                        className="h-10 w-10 object-cover rounded cursor-pointer border hover:border-[#B1C41B]"
+                      />
+                    ))}
+                  </div>
+                )}
+
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <h2 className="text-lg font-bold text-gray-800 line-clamp-1">{producto.nombre}</h2>
@@ -147,7 +195,7 @@ const seleccionarOpcion = (cantidad, precioUnitario) => {
                   </div>
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">{producto.descripcion}</p>
 
-                  <button 
+                  <button
                     onClick={() => abrirModalOpciones(producto)}
                     className="w-full py-2 bg-[#B1C41B] text-white rounded-lg hover:bg-[#9a9e12] transition duration-300 flex items-center justify-center gap-2"
                   >
@@ -160,7 +208,7 @@ const seleccionarOpcion = (cantidad, precioUnitario) => {
           ) : (
             <div className="col-span-full bg-white/90 p-8 rounded-xl shadow-lg text-center">
               <p className="text-gray-800 text-lg">Actualmente no hay productos disponibles.</p>
-              <button 
+              <button
                 onClick={() => window.location.reload()}
                 className="mt-4 px-4 py-2 bg-[#B1C41B] text-white rounded hover:bg-[#9a9e12]"
               >
@@ -172,40 +220,40 @@ const seleccionarOpcion = (cantidad, precioUnitario) => {
       </div>
 
       {/* Modal para seleccionar precio/cantidad */}
-      {productoSeleccionado && (
+      {productoOpcionesModal && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setProductoSeleccionado(null)}
+          onClick={cerrarModalOpciones}
         >
           <div
             className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative"
             onClick={e => e.stopPropagation()}
           >
             <button
-              onClick={() => setProductoSeleccionado(null)}
+              onClick={cerrarModalOpciones}
               className="absolute top-2 right-2 text-gray-600 hover:text-red-600 font-bold text-xl"
             >
               ×
             </button>
 
-            <h3 className="text-xl font-semibold mb-4">{productoSeleccionado.nombre}</h3>
+            <h3 className="text-xl font-semibold mb-4">{productoOpcionesModal.nombre}</h3>
 
             {/* Opción precio base */}
-            <div 
-              className="mb-4 border rounded p-3 cursor-pointer hover:bg-green-100" 
-              onClick={() => seleccionarOpcion(1, Number(productoSeleccionado.precio_base))}
+            <div
+              className="mb-4 border rounded p-3 cursor-pointer hover:bg-green-100"
+              onClick={() => seleccionarOpcion(1, Number(productoOpcionesModal.precio_base))}
             >
               <p>
-                Precio por unidad: <strong>${productoSeleccionado.precio_base ? Number(productoSeleccionado.precio_base).toFixed(2) : "0.00"}</strong> &nbsp;
+                Precio por unidad: <strong>${productoOpcionesModal.precio_base ? Number(productoOpcionesModal.precio_base).toFixed(2) : "0.00"}</strong> &nbsp;
                 <button className="text-green-700 font-semibold underline">Seleccionar</button>
               </p>
             </div>
 
             {/* Opciones de precios por cantidad (si tiene) */}
-            {productoSeleccionado.precios_por_cantidad && productoSeleccionado.precios_por_cantidad.length > 0 && (
+            {productoOpcionesModal.precios_por_cantidad && productoOpcionesModal.precios_por_cantidad.length > 0 && (
               <>
                 <p className="mb-2 font-semibold">Precios por cantidad:</p>
-                {productoSeleccionado.precios_por_cantidad.map((opc, i) => (
+                {productoOpcionesModal.precios_por_cantidad.map((opc, i) => (
                   <div
                     key={i}
                     className="mb-3 border rounded p-3 cursor-pointer hover:bg-green-100"
@@ -224,28 +272,66 @@ const seleccionarOpcion = (cantidad, precioUnitario) => {
       )}
 
       {/* Modal para imagen ampliada */}
-      {selectedImage && (
-        <div 
+      {selectedImage && productoImagenModal && (
+        <div
           className="fixed inset-0 flex items-center justify-center bg-black/80 z-30 p-4"
-          onClick={() => setSelectedImage(null)}
+          onClick={cerrarModalImagen}
         >
-          <div className="relative max-w-4xl w-full">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedImage(null);
-              }} 
+          <div className="relative max-w-4xl w-full" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={cerrarModalImagen}
               className="absolute -top-10 right-0 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition duration-300 z-40"
             >
               ×
             </button>
-            
+
+            {/* Flecha izquierda */}
+            {productoImagenModal.imagenes.length > 1 && (
+              <button
+                onClick={() => cambiarImagen("prev")}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition cursor-pointer"
+                aria-label="Imagen anterior"
+              >
+                ‹
+              </button>
+            )}
+
+            {/* Imagen ampliada */}
             <div className="bg-white rounded-lg overflow-hidden shadow-2xl">
-              <img 
-                src={selectedImage} 
-                alt="Imagen ampliada" 
-                className="w-full h-auto max-h-[80vh] object-contain" 
+              <img
+                src={selectedImage}
+                alt={`Imagen ${indiceImagenSeleccionada + 1} de ${productoImagenModal.imagenes.length}`}
+                className="w-full h-auto max-h-[80vh] object-contain"
               />
+            </div>
+
+            {/* Flecha derecha */}
+            {productoImagenModal.imagenes.length > 1 && (
+              <button
+                onClick={() => cambiarImagen("next")}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition cursor-pointer"
+                aria-label="Imagen siguiente"
+              >
+                ›
+              </button>
+            )}
+
+            {/* Miniaturas dentro del modal */}
+            <div className="flex justify-center gap-2 mt-4 px-2">
+              {productoImagenModal.imagenes.map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img.imagen}
+                  alt={`Miniatura modal ${idx + 1}`}
+                  onClick={() => {
+                    setIndiceImagenSeleccionada(idx);
+                    setSelectedImage(img.imagen);
+                  }}
+                  className={`h-12 w-12 object-cover rounded cursor-pointer border ${
+                    idx === indiceImagenSeleccionada ? "border-[#B1C41B]" : "border-transparent"
+                  }`}
+                />
+              ))}
             </div>
           </div>
         </div>

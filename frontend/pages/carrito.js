@@ -9,7 +9,12 @@ export default function Carrito() {
   const [nombreCliente, setNombreCliente] = useState(""); 
   const [fechaEntrega, setFechaEntrega] = useState(""); 
   const [errorFecha, setErrorFecha] = useState(""); 
-  const [selectedImage, setSelectedImage] = useState(null); 
+
+  // Modal de imagen ampliada con múltiples imágenes
+  const [productoImagenModal, setProductoImagenModal] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [indiceImagenSeleccionada, setIndiceImagenSeleccionada] = useState(0);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -22,30 +27,27 @@ export default function Carrito() {
     setFechaEntrega(fechaMinima);
   }, [carrito]);
 
-const calcularTotal = () => {
-  return carritoState.reduce((total, item) => total + item.precio, 0).toFixed(2);
-};
+  const calcularTotal = () => {
+    return carritoState.reduce((total, item) => total + item.precio, 0).toFixed(2);
+  };
 
+  const generarMensajeWhatsApp = () => {
+    let mensaje = `*🛍️ Pedido de ${nombreCliente}*\n\n`; 
+    mensaje += `📝 *Detalle de tu pedido:*\n\n`; 
 
-const generarMensajeWhatsApp = () => {
-  let mensaje = `*🛍️ Pedido de ${nombreCliente}*\n\n`; 
-  mensaje += `📝 *Detalle de tu pedido:*\n\n`; 
+    carritoState.forEach((item) => {
+      mensaje += `🔸 *${item.nombre}* x${item.cantidad} unidades - *$${item.precio.toFixed(2)}*\n`;
+    });
 
-  carritoState.forEach((item) => {
-    mensaje += `🔸 *${item.nombre}* x${item.cantidad} unidades - *$${item.precio.toFixed(2)}*\n`;
-  });
+    mensaje += `\n💰 *Total: $${calcularTotal()}*\n\n`; 
+    mensaje += `*--------------------------------------*\n`; 
+    mensaje += `*Fecha de entrega: ${fechaEntrega}*\n\n`; 
+    mensaje += `*Gracias por tu compra, ${nombreCliente}! 🎉*\n`; 
+    mensaje += `*Si tienes alguna pregunta, no dudes en contactarnos.*\n`; 
+    mensaje += `📞 *Teléfono de atención: [0959065186]*`; 
 
-  mensaje += `\n💰 *Total: $${calcularTotal()}*\n\n`; 
-  mensaje += `*--------------------------------------*\n`; 
-  mensaje += `*Fecha de entrega: ${fechaEntrega}*\n\n`; 
-  mensaje += `*Gracias por tu compra, ${nombreCliente}! 🎉*\n`; 
-  mensaje += `*Si tienes alguna pregunta, no dudes en contactarnos.*\n`; 
-  mensaje += `📞 *Teléfono de atención: [0959065186]*`; 
-  
-  return encodeURIComponent(mensaje);
-};
-
-
+    return encodeURIComponent(mensaje);
+  };
 
   const irAPagar = () => {
     const hoy = new Date();
@@ -82,6 +84,39 @@ const generarMensajeWhatsApp = () => {
     }
   };
 
+  // Abrir modal imagen ampliada con todas las imágenes del producto
+  const abrirModalImagen = (producto, index = 0) => {
+    setProductoImagenModal(producto);
+    // Si tiene array de imágenes, toma la del índice, si no toma la imagen simple
+    const img = producto.imagenes?.[index]?.imagen || producto.imagen;
+    setSelectedImage(img);
+    setIndiceImagenSeleccionada(index);
+  };
+
+  // Cerrar modal imagen
+  const cerrarModalImagen = () => {
+    setProductoImagenModal(null);
+    setSelectedImage(null);
+    setIndiceImagenSeleccionada(0);
+  };
+
+  // Cambiar imagen en modal con flechas
+  const cambiarImagen = (direccion) => {
+    if (!productoImagenModal) return;
+
+    const imagenes = productoImagenModal.imagenes || [{ imagen: productoImagenModal.imagen }];
+
+    let nuevoIndice;
+    if (direccion === "prev") {
+      nuevoIndice = indiceImagenSeleccionada === 0 ? imagenes.length - 1 : indiceImagenSeleccionada - 1;
+    } else {
+      nuevoIndice = indiceImagenSeleccionada === imagenes.length - 1 ? 0 : indiceImagenSeleccionada + 1;
+    }
+
+    setIndiceImagenSeleccionada(nuevoIndice);
+    setSelectedImage(imagenes[nuevoIndice].imagen);
+  };
+
   return (
     <div 
       className="min-h-screen bg-cover bg-center text-gray-900" 
@@ -114,12 +149,11 @@ const generarMensajeWhatsApp = () => {
                     key={item.id} 
                     className="bg-white p-5 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300"
                   >
-                    <div className="relative overflow-hidden rounded-lg mb-4 h-48">
+                    <div className="relative overflow-hidden rounded-lg mb-4 h-48 cursor-pointer" onClick={() => abrirModalImagen(item, 0)}>
                       <img 
-                        src={item.imagen} 
+                        src={item.imagenes?.[0]?.imagen || item.imagen} 
                         alt={item.nombre} 
-                        className="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
-                        onClick={() => setSelectedImage(item.imagen)} 
+                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                       />
                     </div>
                     <div className="space-y-3">
@@ -141,6 +175,7 @@ const generarMensajeWhatsApp = () => {
                 ))}
               </div>
 
+              {/* Formulario y total (igual que antes) */}
               <div className="grid md:grid-cols-2 gap-8 mb-8">
                 <div className="space-y-6">
                   <div>
@@ -220,22 +255,68 @@ const generarMensajeWhatsApp = () => {
         </div>
       </div>
 
-      {selectedImage && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 p-4">
-          <div className="relative max-w-4xl w-full">
-            <img 
-              src={selectedImage} 
-              alt="Imagen ampliada" 
-              className="w-full h-auto max-h-[90vh] object-contain rounded-lg" 
-            />
-            <button 
-              onClick={() => setSelectedImage(null)} 
-              className="absolute -top-12 right-0 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition"
+      {/* Modal imagen ampliada con navegación */}
+      {selectedImage && productoImagenModal && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/80 z-50 p-4"
+          onClick={cerrarModalImagen}
+        >
+          <div className="relative max-w-4xl w-full" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={cerrarModalImagen}
+              className="absolute -top-10 right-0 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition duration-300 z-40"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              ×
             </button>
+
+            {/* Flecha izquierda */}
+            {(productoImagenModal.imagenes?.length || 0) > 1 && (
+              <button
+                onClick={() => cambiarImagen("prev")}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition cursor-pointer"
+                aria-label="Imagen anterior"
+              >
+                ‹
+              </button>
+            )}
+
+            {/* Imagen ampliada */}
+            <div className="bg-white rounded-lg overflow-hidden shadow-2xl">
+              <img
+                src={selectedImage}
+                alt={`Imagen ${indiceImagenSeleccionada + 1} de ${productoImagenModal.imagenes?.length || 1}`}
+                className="w-full h-auto max-h-[80vh] object-contain"
+              />
+            </div>
+
+            {/* Flecha derecha */}
+            {(productoImagenModal.imagenes?.length || 0) > 1 && (
+              <button
+                onClick={() => cambiarImagen("next")}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition cursor-pointer"
+                aria-label="Imagen siguiente"
+              >
+                ›
+              </button>
+            )}
+
+            {/* Miniaturas dentro del modal */}
+            <div className="flex justify-center gap-2 mt-4 px-2">
+              {(productoImagenModal.imagenes || [{ imagen: productoImagenModal.imagen }]).map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img.imagen}
+                  alt={`Miniatura modal ${idx + 1}`}
+                  onClick={() => {
+                    setIndiceImagenSeleccionada(idx);
+                    setSelectedImage(img.imagen);
+                  }}
+                  className={`h-12 w-12 object-cover rounded cursor-pointer border ${
+                    idx === indiceImagenSeleccionada ? "border-[#B1C41B]" : "border-transparent"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       )}
