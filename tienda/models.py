@@ -9,12 +9,35 @@ class Categoria(models.Model):
 class Producto(models.Model):
     nombre = models.CharField(max_length=255)
     descripcion = models.TextField()
-    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_base = models.DecimalField(max_digits=10, decimal_places=2, help_text="Precio por unidad")
     imagen = models.ImageField(upload_to='productos/')  # Necesita configuración de media
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name='productos')
 
     def __str__(self):
         return self.nombre
+
+    def obtener_precio_por_cantidad(self, cantidad):
+        """
+        Devuelve el precio aplicable según la cantidad indicada.
+        Si no hay precios por cantidad o no aplica, usa el precio base.
+        """
+        precios = self.precios_por_cantidad.order_by('-cantidad_minima')
+        for precio in precios:
+            if cantidad >= precio.cantidad_minima:
+                return precio.precio
+        return self.precio_base
+
+class PrecioPorCantidad(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='precios_por_cantidad')
+    cantidad_minima = models.PositiveIntegerField(help_text="Cantidad mínima para aplicar este precio")
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        ordering = ['-cantidad_minima']  # Ordena de mayor a menor cantidad mínima
+
+    def __str__(self):
+        return f"{self.producto.nombre} - Desde {self.cantidad_minima} unidades: ${self.precio}"
+
 
 class Pedido(models.Model):
     ESTADOS = [
