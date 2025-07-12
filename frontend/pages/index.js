@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function Home() {
+  const [showPolitica, setShowPolitica] = useState(false);
+  const [showTerminos, setShowTerminos] = useState(false);
   const [timeLeft, setTimeLeft] = useState({});
   const [storeStatus, setStoreStatus] = useState("Cerrado");
 
@@ -222,22 +224,47 @@ export default function Home() {
       </div>
 
       {/* Footer mejorado */}
-      <footer className="bg-[#B1C41B]/90 backdrop-blur-md text-white py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-xl font-bold">InArtPoint</div>
-            <div className="flex gap-6">
-              <Link href="/politica-privacidad" className="hover:text-gray-300 transition-colors">Política de Privacidad</Link>
-              <Link href="/terminos" className="hover:text-gray-300 transition-colors">Términos de Servicio</Link>
-              <Link href="/contacto" className="hover:text-gray-300 transition-colors">Contacto</Link>
-            </div>
-          </div>
-          <div className="mt-6 text-center text-sm">
-            <p>&copy; {new Date().getFullYear()} InArtPoint. Todos los derechos reservados.</p>
-            <p className="mt-1">Diseñado con pasión en Ecuador</p>
+    <footer className="bg-[#B1C41B]/90 backdrop-blur-md text-white py-8 mt-12">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-xl font-bold">InArtPoint</div>
+          <div className="flex gap-6">
+            <button onClick={() => setShowPolitica(true)} className="hover:text-gray-300 transition-colors">Política de Privacidad</button>
+            <button onClick={() => setShowTerminos(true)} className="hover:text-gray-300 transition-colors">Términos de Servicio</button>
+            <button onClick={() => window.open("https://wa.me/593959065186", "_blank")} className="hover:text-gray-300 transition-colors">Contacto</button>
           </div>
         </div>
-      </footer>
-    </div>
-  );
+        <div className="mt-6 text-center text-sm">
+          <p>&copy; {new Date().getFullYear()} InArtPoint. Todos los derechos reservados.</p>
+          <p className="mt-1">Diseñado con pasión en Ecuador</p>
+        </div>
+      </div>
+    </footer>
+
+    {/* Modales */}
+    {showPolitica && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+        <div className="bg-white p-6 rounded-lg max-w-xl w-full relative">
+          <button onClick={() => setShowPolitica(false)} className="absolute top-2 right-2 text-gray-600 hover:text-red-600 text-xl">×</button>
+          <h2 className="text-xl font-bold mb-4 text-[#B1C41B]">Política de Privacidad</h2>
+          <p className="text-gray-700 text-sm">
+            Tu información personal se mantiene segura y solo se utiliza para procesar pedidos. No compartimos tus datos con terceros.
+          </p>
+        </div>
+      </div>
+    )}
+
+    {showTerminos && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+        <div className="bg-white p-6 rounded-lg max-w-xl w-full relative">
+          <button onClick={() => setShowTerminos(false)} className="absolute top-2 right-2 text-gray-600 hover:text-red-600 text-xl">×</button>
+          <h2 className="text-xl font-bold mb-4 text-[#B1C41B]">Términos de Servicio</h2>
+          <p className="text-gray-700 text-sm">
+            Al realizar un pedido aceptas nuestras condiciones: pedidos personalizados no tienen devolución. Para dudas, contáctanos por WhatsApp.
+          </p>
+        </div>
+      </div>
+    )}
+  </div>
+);
 }
