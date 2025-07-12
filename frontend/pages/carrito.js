@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useCarrito } from "../context/CarritoContext";
-import { useRouter } from "next/router"; 
+import { useRouter } from "next/router";
 
 export default function Carrito() {
   const { carrito, eliminarDelCarrito } = useCarrito();
@@ -22,27 +22,30 @@ export default function Carrito() {
     setFechaEntrega(fechaMinima);
   }, [carrito]);
 
-  const calcularTotal = () => {
-    return carritoState.reduce((total, item) => total + item.precio * item.cantidad, 0).toFixed(2);
-  };
+const calcularTotal = () => {
+  return carritoState.reduce((total, item) => total + item.precio, 0).toFixed(2);
+};
 
-  const generarMensajeWhatsApp = () => {
-    let mensaje = `*🛍️ Pedido de ${nombreCliente}*\n\n`; 
-    mensaje += `📝 *Detalle de tu pedido:*\n\n`; 
 
-    carritoState.forEach((item) => {
-      mensaje += `🔸 *${item.nombre}* x${item.cantidad} - *$${(item.precio * item.cantidad).toFixed(2)}*\n`; 
-    });
+const generarMensajeWhatsApp = () => {
+  let mensaje = `*🛍️ Pedido de ${nombreCliente}*\n\n`; 
+  mensaje += `📝 *Detalle de tu pedido:*\n\n`; 
+
+  carritoState.forEach((item) => {
+    mensaje += `🔸 *${item.nombre}* x${item.cantidad} unidades - *$${item.precio.toFixed(2)}*\n`;
+  });
+
+  mensaje += `\n💰 *Total: $${calcularTotal()}*\n\n`; 
+  mensaje += `*--------------------------------------*\n`; 
+  mensaje += `*Fecha de entrega: ${fechaEntrega}*\n\n`; 
+  mensaje += `*Gracias por tu compra, ${nombreCliente}! 🎉*\n`; 
+  mensaje += `*Si tienes alguna pregunta, no dudes en contactarnos.*\n`; 
+  mensaje += `📞 *Teléfono de atención: [0959065186]*`; 
   
-    mensaje += `\n💰 *Total: $${calcularTotal()}*\n\n`; 
-    mensaje += `*--------------------------------------*\n`; 
-    mensaje += `*Fecha de entrega: ${fechaEntrega}*\n\n`; 
-    mensaje += `*Gracias por tu compra, ${nombreCliente}! 🎉*\n`; 
-    mensaje += `*Si tienes alguna pregunta, no dudes en contactarnos.*\n`; 
-    mensaje += `📞 *Teléfono de atención: [0959065186]*`; 
-    
-    return encodeURIComponent(mensaje);
-  };
+  return encodeURIComponent(mensaje);
+};
+
+
 
   const irAPagar = () => {
     const hoy = new Date();
@@ -58,7 +61,6 @@ export default function Carrito() {
     window.open(url, "_blank");
 
     carritoState.forEach((item) => eliminarDelCarrito(item.id));
-
     router.push("/"); 
   };
 
@@ -80,29 +82,12 @@ export default function Carrito() {
     }
   };
 
-  const aumentarCantidad = (id) => {
-    setCarritoState(prevState =>
-      prevState.map(item => 
-        item.id === id ? { ...item, cantidad: item.cantidad + 1 } : item
-      )
-    );
-  };
-
-  const disminuirCantidad = (id) => {
-    setCarritoState(prevState =>
-      prevState.map(item => 
-        item.id === id && item.cantidad > 1 ? { ...item, cantidad: item.cantidad - 1 } : item
-      )
-    );
-  };
-
   return (
     <div 
       className="min-h-screen bg-cover bg-center text-gray-900" 
       style={{ backgroundImage: backgroundImage }}
     >
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header con efecto especial */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-extrabold text-[#B1C41B] mb-4 drop-shadow-lg">
             Carrito de Compras
@@ -110,7 +95,6 @@ export default function Carrito() {
           <div className="w-24 h-1 bg-[#B1C41B] mx-auto rounded-full"></div>
         </div>
 
-        {/* Contenido principal */}
         <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-xl p-6 shadow-xl">
           {carritoState.length === 0 ? (
             <div className="text-center py-12">
@@ -124,7 +108,6 @@ export default function Carrito() {
             </div>
           ) : (
             <>
-              {/* Grid de productos */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
                 {carritoState.map((item) => (
                   <div 
@@ -143,23 +126,9 @@ export default function Carrito() {
                       <h2 className="text-xl font-bold text-gray-800">{item.nombre}</h2>
                       <p className="text-gray-600 text-sm line-clamp-2">{item.descripcion}</p>
                       <p className="text-lg font-bold text-[#B1C41B]">${Number(item.precio).toFixed(2)}</p>
-                      
+
                       <div className="flex justify-between items-center pt-3">
-                        <div className="flex items-center space-x-3">
-                          <button 
-                            onClick={() => disminuirCantidad(item.id)} 
-                            className="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition"
-                          >
-                            -
-                          </button>
-                          <span className="font-medium">{item.cantidad}</span>
-                          <button 
-                            onClick={() => aumentarCantidad(item.id)} 
-                            className="w-8 h-8 flex items-center justify-center bg-green-500 text-white rounded-full hover:bg-green-600 transition"
-                          >
-                            +
-                          </button>
-                        </div>
+                        <span className="font-medium text-gray-700">Cantidad: {item.cantidad}</span>
                         <button 
                           onClick={() => eliminarDelCarrito(item.id)} 
                           className="px-3 py-1 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 transition"
@@ -172,7 +141,6 @@ export default function Carrito() {
                 ))}
               </div>
 
-              {/* Formulario de datos del cliente */}
               <div className="grid md:grid-cols-2 gap-8 mb-8">
                 <div className="space-y-6">
                   <div>
@@ -215,7 +183,6 @@ export default function Carrito() {
                 </div>
               </div>
 
-              {/* Resumen y botones */}
               <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
                 <div className="flex flex-col md:flex-row justify-between items-center">
                   <div className="mb-4 md:mb-0">
@@ -253,7 +220,6 @@ export default function Carrito() {
         </div>
       </div>
 
-      {/* Modal de imagen */}
       {selectedImage && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 p-4">
           <div className="relative max-w-4xl w-full">

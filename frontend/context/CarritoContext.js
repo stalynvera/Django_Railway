@@ -12,17 +12,19 @@ export function CarritoProvider({ children }) {
     return [];
   });
 
-  const agregarAlCarrito = (producto) => {
-    setCarrito((prevCarrito) => {
-      const existe = prevCarrito.find((p) => p.id === producto.id);
-      if (existe) {
-        return prevCarrito.map((p) =>
-          p.id === producto.id ? { ...p, cantidad: p.cantidad + 1 } : p
-        );
-      }
-      return [...prevCarrito, { ...producto, cantidad: 1 }];
-    });
-  };
+const agregarAlCarrito = (productoNuevo) => {
+  setCarrito((prevCarrito) => {
+    const existe = prevCarrito.find((p) => p.id === productoNuevo.id);
+    if (existe) {
+      return prevCarrito.map((p) =>
+        p.id === productoNuevo.id
+          ? { ...p, cantidad: p.cantidad + productoNuevo.cantidad }
+          : p
+      );
+    }
+    return [...prevCarrito, productoNuevo];
+  });
+};
 
   const eliminarDelCarrito = (id) => {
     setCarrito((prevCarrito) => {

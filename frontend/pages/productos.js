@@ -11,9 +11,13 @@ export default function Productos() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [mensaje, setMensaje] = useState("");
 
+  // Modal para elegir precio/cantidad
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+
   useEffect(() => {
-    api.get("http://192.168.100.7:8000/api/productos/")
+    api.get("http://192.168.11.20:8000/api/productos/")
       .then(response => {
+        console.log(response.data); // Para confirmar datos recibidos
         setProductos(response.data);
         setLoading(false);
       })
@@ -28,11 +32,23 @@ export default function Productos() {
     setSelectedImage(imageUrl);
   };
 
-  const handleAgregarAlCarrito = (producto) => {
-    agregarAlCarrito(producto);
-    setMensaje(`${producto.nombre} agregado al carrito`);
-    setTimeout(() => setMensaje(""), 3000);
+  // Abrir modal para elegir cantidad/precio
+  const abrirModalOpciones = (producto) => {
+    setProductoSeleccionado(producto);
   };
+
+  // Agregar producto con cantidad y precio seleccionado
+const seleccionarOpcion = (cantidad, precioUnitario) => {
+  agregarAlCarrito({
+    ...productoSeleccionado,
+    cantidad,
+    precio: precioUnitario, // precio por unidad
+  });
+  setMensaje(`${productoSeleccionado.nombre} (${cantidad} unidades) agregado al carrito`);
+  setTimeout(() => setMensaje(""), 3000);
+  setProductoSeleccionado(null);
+};
+
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundImage: 'url(/images/fondo.png)' }}>
@@ -61,18 +77,14 @@ export default function Productos() {
       className="min-h-screen bg-cover bg-fixed bg-center text-gray-900 pb-20" 
       style={{ backgroundImage: 'url(/images/fondo.png)' }}
     >
-      {/* Barra de navegación superior fija */}
+      {/* Barra navegación */}
       <div className="fixed top-0 left-0 right-0 bg-[#B1C41B] text-white p-4 flex justify-between items-center z-10 shadow-lg">
         <button
           onClick={() => window.history.back()}
           className="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition duration-300 flex items-center gap-2"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-          </svg>
-          Regresar
+          ← Regresar
         </button>
-        
         <div className="flex items-center gap-4">
           <button
             onClick={() => window.location.href = "/"}
@@ -80,7 +92,6 @@ export default function Productos() {
           >
             Inicio
           </button>
-          
           <button
             onClick={() => window.location.href = "/carrito"}
             className="relative p-2 bg-[#8B9424] rounded-lg hover:bg-[#7a821f] transition duration-300"
@@ -95,33 +106,24 @@ export default function Productos() {
         </div>
       </div>
 
-      {/* Mensaje de confirmación */}
+      {/* Mensaje confirmación */}
       {mensaje && (
         <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-[#B1C41B] text-white px-6 py-3 rounded-lg shadow-lg z-20 animate-bounce">
-          <div className="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            {mensaje}
-          </div>
+          {mensaje}
         </div>
       )}
 
       {/* Contenido principal */}
-      <div className="pt-24 pb-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="pt-24 pb-10 px-4 max-w-7xl mx-auto">
         <h1 className="text-4xl font-extrabold text-center text-[#B1C41B] mb-8 drop-shadow-md">
           Nuestros Productos
         </h1>
 
-        {/* Grid de productos responsivo */}
+        {/* Grid productos */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {productos.length > 0 ? (
             productos.map((producto) => (
-              <div
-                key={producto.id}
-                className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200"
-              >
-                {/* Imagen del producto */}
+              <div key={producto.id} className="bg-white/90 rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                 <div 
                   className="h-48 overflow-hidden cursor-pointer relative"
                   onClick={() => handleImageClick(producto.imagen)}
@@ -138,17 +140,15 @@ export default function Productos() {
                   </div>
                 </div>
 
-                {/* Detalles del producto */}
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <h2 className="text-lg font-bold text-gray-800 line-clamp-1">{producto.nombre}</h2>
-                    <p className="text-[#B1C41B] font-bold">${producto.precio}</p>
+                    <p className="text-[#B1C41B] font-bold">${producto.precio_base}</p>
                   </div>
-                  
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">{producto.descripcion}</p>
-                  
+
                   <button 
-                    onClick={() => handleAgregarAlCarrito(producto)}
+                    onClick={() => abrirModalOpciones(producto)}
                     className="w-full py-2 bg-[#B1C41B] text-white rounded-lg hover:bg-[#9a9e12] transition duration-300 flex items-center justify-center gap-2"
                   >
                     <ShoppingCart size={18} />
@@ -171,6 +171,58 @@ export default function Productos() {
         </div>
       </div>
 
+      {/* Modal para seleccionar precio/cantidad */}
+      {productoSeleccionado && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setProductoSeleccionado(null)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setProductoSeleccionado(null)}
+              className="absolute top-2 right-2 text-gray-600 hover:text-red-600 font-bold text-xl"
+            >
+              ×
+            </button>
+
+            <h3 className="text-xl font-semibold mb-4">{productoSeleccionado.nombre}</h3>
+
+            {/* Opción precio base */}
+            <div 
+              className="mb-4 border rounded p-3 cursor-pointer hover:bg-green-100" 
+              onClick={() => seleccionarOpcion(1, Number(productoSeleccionado.precio_base))}
+            >
+              <p>
+                Precio por unidad: <strong>${productoSeleccionado.precio_base ? Number(productoSeleccionado.precio_base).toFixed(2) : "0.00"}</strong> &nbsp;
+                <button className="text-green-700 font-semibold underline">Seleccionar</button>
+              </p>
+            </div>
+
+            {/* Opciones de precios por cantidad (si tiene) */}
+            {productoSeleccionado.precios_por_cantidad && productoSeleccionado.precios_por_cantidad.length > 0 && (
+              <>
+                <p className="mb-2 font-semibold">Precios por cantidad:</p>
+                {productoSeleccionado.precios_por_cantidad.map((opc, i) => (
+                  <div
+                    key={i}
+                    className="mb-3 border rounded p-3 cursor-pointer hover:bg-green-100"
+                    onClick={() => seleccionarOpcion(opc.cantidad_minima, Number(opc.precio))}
+                  >
+                    <p>
+                      {opc.cantidad_minima} unidades por <strong>${Number(opc.precio).toFixed(2)}</strong> &nbsp;
+                      <button className="text-green-700 font-semibold underline">Seleccionar</button>
+                    </p>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Modal para imagen ampliada */}
       {selectedImage && (
         <div 
@@ -185,9 +237,7 @@ export default function Productos() {
               }} 
               className="absolute -top-10 right-0 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition duration-300 z-40"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              ×
             </button>
             
             <div className="bg-white rounded-lg overflow-hidden shadow-2xl">
